@@ -1,4 +1,5 @@
 import { promises as fsPromises } from 'fs';
+import crypto from 'crypto'
 
 export class ProductManager {
     constructor(path) {
@@ -6,33 +7,26 @@ export class ProductManager {
     }
 
     async addProduct(newProduct) {
-        try {
-            const prods = JSON.parse(await fsPromises.readFile(this.path, 'utf-8'));
-
-            if (
-                newProduct.code &&
-                newProduct.id &&
-                newProduct.title &&
-                newProduct.description &&
-                newProduct.price &&
-                newProduct.thumbnail &&
-                newProduct.stock
-            ) {
-                const indice = prods.findIndex(prod => prod.code === newProduct.code);
-
-                if (indice === -1) {
-                    prods.push(newProduct);
-                    await fsPromises.writeFile(this.path, JSON.stringify(prods, null, 2));
-                    return 'Producto creado correctamente';
-                } else {
-                    return 'El producto ya existe';
-                }
+        const prods = JSON.parse(await fsPromises.readFile(this.path, 'utf-8'));
+        if (
+            newProduct.code &&
+            newProduct.title &&
+            newProduct.description &&
+            newProduct.price &&
+            newProduct.thumbnail &&
+            newProduct.stock
+        ) {
+            const indice = prods.findIndex(prod => prod.code === newProduct.code);
+            if (indice === -1) {
+                newProduct.id = crypto.randomBytes(10).toString('hex')
+                prods.push(newProduct);
+                await fsPromises.writeFile(this.path, JSON.stringify(prods, null, 2));
+                return 'Producto creado correctamente';
             } else {
-                return 'Ingrese el producto con todos los datos';
+                return 'El producto ya existe';
             }
-        } catch (error) {
-            console.error('Error al agregar el producto:', error);
-            return 'Error al agregar el producto';
+        } else {
+            return 'Ingrese el producto con todos los datos';
         }
     }
 
@@ -47,19 +41,9 @@ export class ProductManager {
     }
 
     async getProductById(id) {
-        try {
-            const prods = JSON.parse(await fsPromises.readFile(this.path, 'utf-8'));
-            const prod = prods.find(product => product.id === id);
-
-            if (prod) {
-                return prod;
-            } else {
-                return 'Not Found';
-            }
-        } catch (error) {
-            console.error('Error al obtener el producto por ID:', error);
-            return 'Error al obtener el producto por ID';
-        }
+        const prods = JSON.parse(await fsPromises.readFile(this.path, 'utf-8'));
+        const prod = prods.find(product => product.id === id);
+        return prod;
     }
 
     async updateProduct(id, newProduct) {

@@ -1,33 +1,31 @@
 import express from 'express';
-import { ProductManager } from './config/ProductManager.js';
+import cartRouter from './routes/cartRouter.js';
+import productsRouter from './routes/productsRouter.js';
+import upload from './config/multer.js';
+import { __dirname } from './path.js';
 
+// Configuraciones y declaraciones
 const app = express();
 const PORT = 8000;
-const productManager = new ProductManager('./products.json');
 
-app.get('/', (req, res) => {
-    res.send('Servidor Express');
-});
+// Middlewares
+app.use(express.json())
+app.use('/static', express.static(__dirname + '/public'));
 
-app.get('/products', async (req, res) => {
-    const { limit } = req.query;
-    const prods = await productManager.getProducts();
-    const limite = parseInt(limit);
-
-    if (limite && limite > 0) {
-        const prodsLimit = prods.slice(0, limite);
-        res.send(prodsLimit);
-    } else {
-        res.send('Ingrese un número mayor a 0');
+// Rutas
+app.use('/api/products', productsRouter)
+app.use('/api/cart', cartRouter)
+app.post('/upload', upload.single('product'), (req, res) => {
+    try {
+        console.log(req.file)    
+        res.status(200).send("Imagen cargada con exito")
+    } catch (e){
+        res.status(500).send("Error al intentar cargar la imagen")
     }
-});
 
-app.get('/productos/:pid', async (req, res) => {
-    const idProducto = req.params.pid;
-    const prod = await productManager.getProductById(idProducto);
-    res.send(prod);
-});
+})
 
+// Servidor
 app.listen(PORT, () => {
-    console.log(`Server on port ${PORT}`);
+    console.log(`Server on port ${PORT}`)
 });
