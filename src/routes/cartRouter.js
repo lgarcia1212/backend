@@ -1,26 +1,34 @@
 import { Router } from "express"
-import { CartManager } from "../config/CartManager.js"
-const cartManager = new CartManager('./data/cart.json')
+import cartModel from "../models/cart.js"
 const cartRouter = Router()
 
 
 
-cartRouter.get('/', async (req, res) => {
+cartRouter.get('/id', async (req, res) => {
     try {
-        const cart = await cartManager.getCart()
-
+        const cartId = req.params.id
+        const cart = await cartModel.findById(cartId)
         res.status(200).send(cart);
     } catch(error) {
         res.status(500).send(`Error interno del Servidor ${error}`)
     }    
 });
 
-cartRouter.post('/:pid', async (req, res) => {
-
+cartRouter.post('/:cid/:pid', async (req, res) => {
     try {
+        const cart = req.params.cid
         const { productId } = req.params.pid
         const { quantity } = req.body
-        const mensaje = await cartManager.addProductByCart(productId, quantity)        
+        const cart = await cartModel.findById(cartId)
+
+        const indice = cart.products.findIndex(product => product.id == productId)
+
+        if (indice !=-1) {
+            cart.products[indice].quantity +=
+        } else {
+            cart.products.push({id: productId, quantity: quantity})
+        }
+        const mensaje = await cartModel.findByIdAndUpdate(cartId, cart)
         res.status(200).send(mensaje)
     } catch(error) {
         res.status(500).send(`Error interno del Servidor al intentar añadir producto: ${error}`)
