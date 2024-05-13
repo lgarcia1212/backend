@@ -17,8 +17,6 @@ const cartSchema = new Schema({
         ],
         default: []
     }
-
-
 })
 
 cartSchema.pre('findOne', function () {

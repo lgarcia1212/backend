@@ -9,8 +9,8 @@ const cookieExtractor = req => {
 }
 
 const jwtOptions = {
-    jwtFromRequest: ExtractJwt.fromExtractors([cookieExtractor]),
-    secretOrKey: ""
+    jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+    secretOrKey: "coderhouse"
 }
 
 export const strategyJWT = new JwtStrategy(jwtOptions, async (payload, done) => {

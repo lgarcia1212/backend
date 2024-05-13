@@ -1,41 +1,87 @@
-import productModel from "../models/product.js"
+import productModel from "../models/product.js";
 
-export const getProducts = async (query, limit, pag, ordQuery) => {
+export const getProducts = async (req, res) => {
+    console.log(req)
+    try {
+        const { limit, page, filter, ord } = req.query;
         let metFilter;
         const pag = page !== undefined ? page : 1;
         const limi = limit !== undefined ? limit : 10;
-    
+
         if (filter == "true" || filter == "false") {
             metFilter = "status"
         } else {
             if (filter !== undefined)
                 metFilter = "category";
         }
-    
         const query = metFilter != undefined ? { [metFilter]: filter } : {};
         const ordQuery = ord !== undefined ? { price: ord } : {};
-    
         const prods = await productModel.paginate(query, { limit: limi, page: pag, sort: ordQuery });
-        return prods
-
+        res.status(200).send(prods)
+    } catch (error) {
+        res.status(500).render('templates/error', {
+            error: error,
+        });
+    }
 }
 
-export const getProduct = async (idProducto) => {
+export const getProduct = async (req, res) => {
+    try {
+        const idProducto = req.params.pid
         const prod = await productModel.findById(idProducto)
-        return prod
+        if (prod)
+            res.status(200).send(prod)
+        else
+            res.status(404).send("Producto inexistente")
+    } catch (error) {
+        res.status(500).send(`Error interno del servidor al intentar consultar producto: ${error}`)
+    }
 }
 
-export const createProduct = async(product) => {
-    const mensaje = await productModel.create(product)
-    return mensaje
+export const createProduct = async (req, res) => {
+    console.log(req.user)
+    console.log(req.user.rol)
+    try {
+        if (req.user.rol == "Admin") {
+            const product = req.body
+            const mensaje = await productModel.create(product)
+            res.status(201).send(mensaje)
+        } else {
+            res.status(403).send("Usuario no autorizado")
+        }
+
+
+    } catch (error) {
+        res.status(500).send(`Error interno del servidor al intentar crear producto: ${error}`)
+    }
 }
 
-export const updateProduct = async(idProducto, upProduct) => {
-    const mensaje = await productModel.findByIdAndUpdate(idProducto, upProduct)
-    return mensaje
+export const updateProduct = async (req, res) => {
+    try {
+        if (req.user.rol == "Admin") {
+            const idProducto = req.params.pid
+            const updateProduct = req.body
+            const prod = await productModel.findByIdAndUpdate(idProducto, updateProduct)
+            res.status(200).send(prod)
+        } else {
+            res.status(403).send("Usuario no autorizado")
+        }
+    } catch (error) {
+        res.status(500).send(`Error interno del servidor al intentar actualizar producto: ${error}`)
+    }
 }
 
-export const deleteProduct = async(idProducto) => {
-    const mensaje = await productModel.findByIdAndDelete(idProducto)
-    return mensaje
+export const deleteProduct = async (req, res) => {
+    try {
+        console.log(req.user.rol)
+        if (req.user.rol == "Admin") {
+            const idProducto = req.params.pid
+            const mensaje = await productModel.findByIdAndDelete(idProducto)
+            res.status(200).send(mensaje)
+        } else {
+            res.status(403).send("Usuario no autorizado")
+        }
+    } catch (error) {
+        res.status(500).send(`Error interno del servidor al intentar eliminar producto: ${error}`)
+    }
 }

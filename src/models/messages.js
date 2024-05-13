@@ -5,7 +5,6 @@ const messageSchema = new Schema ({
         type: String,
         required: true
     },
-
     message: {
         type: String,
         required: true
