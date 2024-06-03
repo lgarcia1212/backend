@@ -53,20 +53,37 @@ export const createTicket = async (req, res) => {
             cart.products.forEach(async (prod) => {
                 let producto = await productModel.findById(prod.id_prod)
                 if (producto.stock - prod.quantity < 0) {
-                    prodSinStock.push(producto)
+                    prodSinStock.push(producto.id)
                 }
             })
             if (prodSinStock.length == 0) {
-                const totalPrice = cart.products.reduce((a,b) => (a.price * a.quantity) + (b.price * b.quantity), 0)
+                const totalPrice = cart.products.reduce((a,b) => (a.id_prod.price * a.quantity) + (b.id_prod.price * b.quantity), 0)
+                const aux = [...cart.products]
                 const newTicket = await ticketModel.create({
                     code: crypto.randomUUID(),
                     purchaser: req.user.email,
                     amount: totalPrice,
                     products: cart.products
                 })
-                // vaciar carrito
+                cart.products.forEach(async (prod) => {
+                    const prodBDD = await productModel.findByIdAndUpdate(prod.id_prod, {
+                        stock: prod.quantity
+                    })
+                     
+                })
+                await cartModel.findByIdAndUpdate(cartId, {
+                    products: []
+                })
                 res.status(200).send(newTicket)
             } else {
+                console.log(prodSinStock)
+                prodSinStock.forEach((prodId) => {
+                    cart.products = cart.products.filter(pro => pro.id_prod !== prodId)
+                })
+                await cartModel.findByIdAndUpdate(cartId, {
+                    products: cart.products
+                })
+                res.status(400).send(`Productos sin stock: ${prodSinStock}`)
             }
         } else {
             res.status(404).send("Carrito inexistente")
